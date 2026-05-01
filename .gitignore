@@ -1,0 +1,22 @@
+# Environment Variables (Private)
+.env
+
+# Database (Local data)
+users.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env/
+
+# Logs
+*.log
+server_log.txt
+
+# OS
+.DS_Store
+Thumbs.db

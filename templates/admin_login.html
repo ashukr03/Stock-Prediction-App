@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Admin Login — AI Stock Pro{% endblock %}
+{% block content %}
+<div class="auth-container">
+  <div class="auth-card fade-in">
+    <h2>🛠️ Admin Portal</h2>
+    <p class="sub">Authorized personnel only</p>
+    <div id="alert-container"></div>
+    <form method="POST" action="{{ url_for('admin_login') }}">
+      <div class="form-group">
+        <label>Admin Password</label>
+        <input type="password" name="password" class="form-input" placeholder="Enter admin password" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Login to Admin</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

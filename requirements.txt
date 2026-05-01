@@ -1,0 +1,13 @@
+Flask>=3.0
+Flask-Session>=0.5
+yfinance>=0.2.40
+keras>=3.0
+tensorflow>=2.16
+scikit-learn>=1.4
+textblob>=0.18
+newsapi-python>=0.2.7
+requests>=2.31
+pandas>=2.2
+numpy>=1.26
+gunicorn>=21.2
+python-dotenv>=1.0

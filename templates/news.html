@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}News & Sentiment{% endblock %}
+{% block content %}
+<div class="page-wrap">
+  <div class="section-title">📰 Live News & Sentiment</div>
+  <form method="GET" action="{{ url_for('news') }}" style="margin-bottom:1.5rem">
+    <div class="search-bar">
+      <span class="prefix">$</span>
+      <input type="text" name="ticker" value="{{ ticker }}" placeholder="Enter ticker: AAPL, GOOGL …"
+        spellcheck="false">
+      <button type="submit" class="go-btn">Search →</button>
+    </div>
+  </form>
+
+  {% if ticker and news_list is defined %}
+  <div class="grid-2" style="grid-template-columns:1fr 3fr">
+    <!-- Sentiment Gauge -->
+    <div class="card" style="text-align:center">
+      <div style="font-size:2.5rem">{{ '🚀' if score > 0.05 else '📉' if score < -0.05 else '⚖️' }}</div>
+          <div
+            style="font-size:1.3rem;font-weight:700;color:{{ '#00e676' if score > 0.05 else '#ff3d5a' if score < -0.05 else '#ffc107' }}">
+            {{ 'Bullish' if score > 0.05 else 'Bearish' if score < -0.05 else 'Neutral' }} </div>
+              <div style="color:var(--sub);font-size:.85rem;margin-top:.3rem">Sentiment Score</div>
+              <div
+                style="font-size:1.8rem;font-weight:700;color:{{ '#00e676' if score > 0.05 else '#ff3d5a' if score < -0.05 else '#ffc107' }}">
+                {{ "%+.3f"|format(score) }}</div>
+          </div>
+          <!-- News List -->
+          <div class="card">
+            <div style="display:flex;gap:1.5rem;flex-wrap:wrap;margin-bottom:.8rem;font-size:.78rem;color:var(--sub)">
+              <span>🟢 Positive — likely good for stock</span>
+              <span>🔴 Negative — may put downward pressure</span>
+              <span>⚪ Neutral — no strong impact</span>
+            </div>
+            {% if news_list %}
+            {% for art in news_list %}
+            <div class="news-item">
+              <div class="news-title">{{ '🟢' if art.polarity > 0.05 else '🔴' if art.polarity < -0.05 else '⚪' }} {{
+                  art.title }}</div>
+                  <div class="news-meta">{{ art.source }} · {{ art.published }} {% if art.url %}<a href="{{ art.url }}"
+                      target="_blank" class="news-link">🔗 Read Full Article</a>{% endif %}</div>
+              </div>
+              {% endfor %}
+              {% else %}
+              <div class="alert alert-info">No news articles found. Try a different ticker.</div>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+      </div>
+      {% endblock %}

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Financials{% endblock %}
+{% block content %}
+<div class="page-wrap">
+  <div class="section-title">📊 Financials — Balance Sheet & P&L</div>
+  <form method="GET" action="{{ url_for('financials') }}" style="margin-bottom:1.5rem">
+    <div class="search-bar">
+      <span class="prefix">$</span>
+      <input type="text" name="ticker" value="{{ ticker }}" placeholder="Enter ticker: AAPL, GOOGL …"
+        spellcheck="false">
+      <button type="submit" class="go-btn">Load →</button>
+    </div>
+  </form>
+
+  {% if error %}
+  <div class="alert alert-error">{{ error }}</div>
+  {% elif ticker %}
+  <div class="fin-tabs">
+    <button class="fin-tab active" onclick="showTab('income',this)">📈 Income Statement</button>
+    <button class="fin-tab" onclick="showTab('balance',this)">🏦 Balance Sheet</button>
+    <button class="fin-tab" onclick="showTab('cashflow',this)">💵 Cash Flow</button>
+  </div>
+  <div id="tab-income" class="table-wrap">
+    {% if income is not none %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Item</th>{% for c in income.columns %}<th>{{ c }}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>{% for idx, row in income.iterrows() %}<tr>
+          <td style="font-weight:600;color:var(--accent)">{{ idx }}</td>{% for v in row %}<td>{{ v }}</td>{% endfor %}
+        </tr>{% endfor %}</tbody>
+    </table>
+    {% else %}<div class="alert alert-info">No income statement data available.</div>{% endif %}
+  </div>
+  <div id="tab-balance" class="table-wrap hidden">
+    {% if balance is not none %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Item</th>{% for c in balance.columns %}<th>{{ c }}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>{% for idx, row in balance.iterrows() %}<tr>
+          <td style="font-weight:600;color:var(--accent)">{{ idx }}</td>{% for v in row %}<td>{{ v }}</td>{% endfor %}
+        </tr>{% endfor %}</tbody>
+    </table>
+    {% else %}<div class="alert alert-info">No balance sheet data available.</div>{% endif %}
+  </div>
+  <div id="tab-cashflow" class="table-wrap hidden">
+    {% if cashflow is not none %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Item</th>{% for c in cashflow.columns %}<th>{{ c }}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>{% for idx, row in cashflow.iterrows() %}<tr>
+          <td style="font-weight:600;color:var(--accent)">{{ idx }}</td>{% for v in row %}<td>{{ v }}</td>{% endfor %}
+        </tr>{% endfor %}</tbody>
+    </table>
+    {% else %}<div class="alert alert-info">No cash flow data available.</div>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  function showTab(name, btn) {
+    document.querySelectorAll('[id^="tab-"]').forEach(e => e.classList.add('hidden'));
+    document.querySelectorAll('.fin-tab').forEach(e => e.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.remove('hidden');
+    btn.classList.add('active');
+  }
+</script>
+{% endblock %}

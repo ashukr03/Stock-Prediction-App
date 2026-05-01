@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Sign Up{% endblock %}
+{% block content %}
+<div class="auth-container">
+  <div class="auth-card fade-in">
+    <h2>✨ Create Account</h2>
+    <p class="sub">Join AI Stock Pro — Free forever</p>
+    <div id="alert-container"></div>
+
+    {% if not otp_sent %}
+    <!-- Step 1: Details + Send OTP -->
+    <div class="auth-step">Step 1 of 2 — Your Details</div>
+    <form method="POST" action="{{ url_for('signup') }}">
+      <input type="hidden" name="step" value="send_otp">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" name="name" class="form-input" placeholder="Rahul Sharma" required
+          value="{{ request.form.get('name','') }}">
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" name="email" class="form-input" placeholder="rahul@gmail.com" required
+          value="{{ request.form.get('email','') }}">
+      </div>
+      <div class="form-group">
+        <label>Create Password</label>
+        <input type="password" name="password" class="form-input" placeholder="Min 6 characters" required minlength="6">
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <input type="password" name="confirm" class="form-input" placeholder="Re-enter password" required minlength="6">
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Send OTP</button>
+    </form>
+    {% else %}
+    <!-- Step 2: Verify OTP -->
+    <div class="auth-step">Step 2 of 2 — Verify OTP</div>
+    <div class="otp-note">📧 OTP sent to <strong>{{ pending_email }}</strong>. Check inbox/spam. Valid 10 min.</div>
+    <form method="POST" action="{{ url_for('signup') }}">
+      <input type="hidden" name="step" value="verify_otp">
+      <div class="form-group">
+        <label>6-Digit OTP</label>
+        <input type="text" name="otp" class="form-input" placeholder="000000" required maxlength="6"
+          style="font-family:var(--mono);font-size:1.5rem;text-align:center;letter-spacing:.5em">
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Verify & Create Account</button>
+    </form>
+    {% endif %}
+
+    <div class="auth-links">
+      Already have an account? <a href="{{ url_for('login') }}">Login</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

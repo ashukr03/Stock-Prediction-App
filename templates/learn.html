@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% block title %}Learn{% endblock %}
+{% block content %}
+<div class="page-wrap">
+  <div class="section-title">🎓 Knowledge Base</div>
+
+  <div style="margin-bottom:2rem">
+    <form method="GET" action="{{ url_for('learn') }}" style="display:flex;gap:1rem;">
+      <div class="search-bar" style="flex:1">
+        <input type="text" name="q" id="search-input" value="{{ search }}"
+          placeholder="Search terms, concepts, or indicators..." style="padding-left:1.5rem">
+        <button type="submit" class="go-btn">Search</button>
+      </div>
+      <button type="button" class="btn-primary" onclick="askAI()"
+        style="white-space:nowrap;padding:0 1.5rem;box-shadow:0 0 15px rgba(213,128,255,0.4);background:var(--purple)">Ask
+        AI ✨</button>
+    </form>
+  </div>
+
+  <div id="ai-response-container" class="card fade-in hidden"
+    style="margin-bottom:2rem;border:1px solid var(--purple);background:rgba(213,128,255,0.05)">
+    <h3
+      style="color:var(--purple);font-size:1.3rem;margin-bottom:1rem;border-bottom:1px solid rgba(213,128,255,0.3);padding-bottom:.5rem">
+      ✨ AI Explanation</h3>
+    <div id="ai-loading" class="hidden" style="display:flex;align-items:center;gap:1rem;color:var(--muted)">
+      <div class="spinner"
+        style="width:20px;height:20px;border:3px solid rgba(213,128,255,0.3);border-top-color:var(--purple);border-radius:50%;animation:spin 1s linear infinite">
+      </div>
+      Generating explanation...
+    </div>
+    <div id="ai-content" style="color:var(--text);line-height:1.6;font-size:.95rem"></div>
+  </div>
+
+  <style>
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .ai-markdown h1,
+    .ai-markdown h2,
+    .ai-markdown h3 {
+      color: var(--accent);
+      margin-top: 1.5rem;
+      margin-bottom: .5rem;
+    }
+
+    .ai-markdown p {
+      margin-bottom: 1rem;
+    }
+
+    .ai-markdown ul {
+      margin-bottom: 1rem;
+      padding-left: 1.5rem;
+    }
+
+    .ai-markdown li {
+      margin-bottom: .25rem;
+    }
+
+    .ai-markdown strong {
+      color: var(--gold);
+    }
+
+    .ai-markdown pre {
+      background: var(--bg);
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin-bottom: 1rem;
+      border: 1px solid var(--border);
+    }
+  </style>
+
+  {% if not glossary %}
+  <div class="alert alert-info">No terms found matching "{{ search }}".</div>
+  {% else %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(450px,1fr));gap:2rem">
+    {% for term, data in glossary.items() %}
+    <div class="card fade-in">
+      <h3
+        style="color:var(--accent);font-size:1.3rem;margin-bottom:.5rem;border-bottom:1px solid var(--border);padding-bottom:.5rem">
+        {{ term }}</h3>
+      <p style="color:var(--text);line-height:1.6;margin-bottom:1rem;font-size:.95rem">{{ data.desc }}</p>
+      <div
+        style="background:var(--bg);border-left:3px solid var(--gold);padding:.75rem 1rem;font-size:.85rem;color:var(--muted);margin-bottom:1.5rem;font-style:italic">
+        <strong>Example:</strong> {{ data.example }}
+      </div>
+
+      <div class="visual-container" style="min-height:150px;display:flex;align-items:center;justify-content:center">
+        {% if data.type == 'html' %}
+        <div style="width:100%">{{ data.visual|safe }}</div>
+        {% elif data.type == 'chart' %}
+        <div id="chart-{{ loop.index }}" style="width:100%;height:200px;" data-chart-type="{{ data.visual }}"></div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const chartDivs = document.querySelectorAll('[data-chart-type]');
+
+    const layoutBase = {
+      paper_bgcolor: 'transparent',
+      plot_bgcolor: 'transparent',
+      margin: { t: 10, b: 20, l: 30, r: 10 },
+      font: { color: '#4a6a90' },
+      xaxis: { showgrid: false, visible: false },
+      yaxis: { gridcolor: '#1a2d4a', zerolinecolor: '#1a2d4a' }
+    };
+
+    chartDivs.forEach(div => {
+      const type = div.getAttribute('data-chart-type');
+      let traces = [];
+      let layout = Object.assign({}, layoutBase);
+
+      // Generate dummy x axis
+      const x = Array.from({ length: 50 }, (_, i) => i);
+
+      if (type === 'rsi') {
+        // Generate oscillating line 20 to 80
+        const y = x.map(i => 50 + 30 * Math.sin(i / 3) + (Math.random() * 10 - 5));
+        traces = [{ x: x, y: y, type: 'scatter', mode: 'lines', line: { color: '#00d4ff' } }];
+        // Add overbought/oversold lines
+        layout.shapes = [
+          { type: 'line', y0: 70, y1: 70, x0: 0, x1: 50, line: { color: '#ff3d5a', width: 1, dash: 'dash' } },
+          { type: 'line', y0: 30, y1: 30, x0: 0, x1: 50, line: { color: '#00e676', width: 1, dash: 'dash' } }
+        ];
+        layout.yaxis.range = [0, 100];
+
+      } else if (type === 'macd') {
+        const macd = x.map(i => Math.sin(i / 5) * 5);
+        const signal = x.map(i => Math.sin((i - 2) / 5) * 4);
+        const hist = macd.map((m, i) => m - signal[i]);
+
+        traces = [
+          { x: x, y: hist, type: 'bar', marker: { color: hist.map(v => v >= 0 ? '#00e676' : '#ff3d5a') }, name: 'Histogram' },
+          { x: x, y: macd, type: 'scatter', mode: 'lines', line: { color: '#00d4ff' }, name: 'MACD' },
+          { x: x, y: signal, type: 'scatter', mode: 'lines', line: { color: '#ffc107' }, name: 'Signal' }
+        ];
+        layout.showlegend = false;
+
+      } else if (type === 'bollinger') {
+        const price = x.map(i => 100 + i + Math.sin(i / 2) * 10 + (Math.random() * 5));
+        const upper = price.map(p => p + 15);
+        const lower = price.map(p => p - 15);
+
+        traces = [
+          { x: x, y: upper, type: 'scatter', mode: 'lines', line: { color: 'rgba(0,212,255,0.3)', dash: 'dot' }, name: 'Upper' },
+          { x: x, y: lower, type: 'scatter', mode: 'lines', line: { color: 'rgba(0,212,255,0.3)', dash: 'dot' }, fill: 'tonexty', fillcolor: 'rgba(0,212,255,0.05)', name: 'Lower' },
+          { x: x, y: price, type: 'scatter', mode: 'lines', line: { color: '#00e676' }, name: 'Price' }
+        ];
+        layout.showlegend = false;
+
+      } else if (type === 'drawdown') {
+        const price = x.map(i => {
+          if (i < 15) return 100 + i * 2;
+          if (i < 30) return 130 - (i - 15) * 5; // Drop!
+          return 55 + (i - 30) * 3;
+        });
+        traces = [{ x: x, y: price, type: 'scatter', mode: 'lines', line: { color: '#ff3d5a' }, fill: 'tozeroy', fillcolor: 'rgba(255,61,90,0.1)' }];
+        layout.annotations = [{
+          x: 15, y: 130, text: 'Peak', showarrow: true, arrowhead: 2, ax: 0, ay: -30, font: { color: '#fff' }
+        }, {
+          x: 30, y: 55, text: 'Trough (Drawdown)', showarrow: true, arrowhead: 2, ax: 0, ay: 30, font: { color: '#ff3d5a' }
+        }];
+      }
+
+      Plotly.newPlot(div, traces, layout, { displayModeBar: false, staticPlot: true });
+    });
+  });
+
+  mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+
+  async function askAI() {
+    const query = document.getElementById('search-input').value.trim();
+    if (!query) return alert('Please enter a query to ask AI.');
+
+    const container = document.getElementById('ai-response-container');
+    const loading = document.getElementById('ai-loading');
+    const content = document.getElementById('ai-content');
+
+    container.classList.remove('hidden');
+    loading.classList.remove('hidden');
+    content.innerHTML = '';
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
+      const res = await fetch(`/api/ai_search?q=${encodeURIComponent(query)}`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      const data = await res.json();
+      loading.classList.add('hidden');
+
+      if (data.error) {
+        content.innerHTML = `<div class="alert alert-error">AI Error: ${data.error}</div>`;
+        return;
+      }
+
+      content.className = 'ai-markdown';
+      content.innerHTML = marked.parse(data.result);
+
+      // Find all mermaid blocks and render them individually
+      const mermaidBlocks = content.querySelectorAll('.language-mermaid');
+      for (let i = 0; i < mermaidBlocks.length; i++) {
+        const block = mermaidBlocks[i];
+        const code = block.textContent;
+        const id = 'mermaid-diag-' + Date.now() + '-' + i;
+        try {
+          const { svg } = await mermaid.render(id, code);
+          block.parentElement.outerHTML = `<div class="mermaid-wrap" style="background:var(--bg);padding:1rem;border-radius:8px;margin:1rem 0;overflow-x:auto">${svg}</div>`;
+        } catch (diagErr) {
+          console.error("Diagram error:", diagErr);
+          // If render fails, we just keep the raw code block or hide it
+          block.parentElement.style.border = "1px solid var(--red)";
+        }
+      }
+
+    } catch (err) {
+      loading.classList.add('hidden');
+      content.innerHTML = `<div class="alert alert-error">Error: ${err.name === 'AbortError' ? 'AI timed out. Try again.' : err.message}</div>`;
+    }
+  }
+</script>
+{% endblock %}

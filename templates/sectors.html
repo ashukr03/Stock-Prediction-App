@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Sector Performance{% endblock %}
+{% block content %}
+<div class="page-wrap">
+  <div class="section-title">🌐 Sector-Wise Performance (YTD)</div>
+  {% if error %}
+  <div class="alert alert-error">{{ error }}</div>
+  {% else %}
+  <div class="sector-grid">
+    {% for sector_name, tickers in sector_data.items() %}
+    <div class="card">
+      <h3 style="color:var(--accent);font-size:1rem;margin-bottom:1rem">{{ sector_name }}</h3>
+      <div id="sector-{{ loop.index }}" style="min-height:200px"></div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+{% if sector_data %}
+<script>
+  var sectors = {{ sector_data | tojson }};
+  var idx = 1;
+  for (var name in sectors) {
+    var items = sectors[name];
+    var tickers = items.map(i => i[0]);
+    var values = items.map(i => i[1]);
+    var colors = values.map(v => v >= 0 ? '#00e676' : '#ff1744');
+    Plotly.newPlot('sector-' + idx, [{
+      y: tickers, x: values, type: 'bar', orientation: 'h',
+      marker: { color: colors }, text: values.map(v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%'),
+      textposition: 'outside', textfont: { color: '#e0e6f0', size: 10 }
+    }], plotlyDarkLayout({
+      title: name, height: 220, margin: { l: 80, r: 40, t: 40, b: 30 },
+      xaxis: { ...PLOTLY_LAYOUT.xaxis, title: 'YTD %' },
+      shapes: [{ type: 'line', x0: 0, x1: 0, y0: -.5, y1: tickers.length - .5, line: { color: '#5a7fa8', width: .8 } }]
+    }), PLOTLY_CONFIG);
+    idx++;
+  }
+</script>
+{% endif %}
+{% endblock %}

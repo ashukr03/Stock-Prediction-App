@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Technical Analysis{% endblock %}
+{% block content %}
+<div class="page-wrap">
+  <div class="section-title">📉 Technical Analysis</div>
+  <form method="GET" action="{{ url_for('technical') }}" style="margin-bottom:1.5rem">
+    <div class="search-bar">
+      <span class="prefix">$</span>
+      <input type="text" name="ticker" value="{{ ticker }}" placeholder="Enter ticker: TSLA, AAPL …" spellcheck="false">
+      <button type="submit" class="go-btn">Analyze →</button>
+    </div>
+  </form>
+
+  {% if error %}
+  <div class="alert alert-error">{{ error }}</div>
+  {% elif ticker and chart_data %}
+  <div class="period-selector">
+    {% for p in ['1M','3M','6M','1Y','3Y','5Y'] %}
+    <button class="period-btn {% if period == p %}active{% endif %}"
+      onclick="window.location.href='?ticker={{ ticker }}&period={{ p }}'">{{ p }}</button>
+    {% endfor %}
+  </div>
+  <div class="chart-container" id="priceChart" style="min-height:400px"></div>
+  <div class="grid-2">
+    <div class="chart-container" id="rsiChart" style="min-height:200px"></div>
+    <div class="chart-container" id="macdChart" style="min-height:200px"></div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+{% if chart_data %}
+<script>
+  var d = {{ chart_data | tojson }};
+  // Price + Bollinger + MAs
+  Plotly.newPlot('priceChart', [
+    { x: d.dates, y: d.close, type: 'scatter', mode: 'lines', name: 'Price', line: { color: '#40c4ff', width: 1.5 } },
+    { x: d.dates, y: d.bb_up, type: 'scatter', mode: 'lines', name: 'BB Upper', line: { color: '#e0e6f0', width: .6, dash: 'dash' }, opacity: .4 },
+    { x: d.dates, y: d.bb_dn, type: 'scatter', mode: 'lines', name: 'BB Lower', line: { color: '#e0e6f0', width: .6, dash: 'dash' }, opacity: .4, fill: 'tonexty', fillcolor: 'rgba(64,196,255,.05)' },
+    { x: d.dates, y: d.ma100, type: 'scatter', mode: 'lines', name: 'MA100', line: { color: '#69f0ae', width: .9 }, opacity: .7 },
+    { x: d.dates, y: d.ma200, type: 'scatter', mode: 'lines', name: 'MA200', line: { color: '#ea80fc', width: .9 }, opacity: .7 }
+  ], plotlyDarkLayout({ title: '{{ ticker }} — Price & Technical Indicators', height: 400 }), PLOTLY_CONFIG);
+
+  // RSI
+  Plotly.newPlot('rsiChart', [
+    { x: d.dates, y: d.rsi, type: 'scatter', mode: 'lines', name: 'RSI', line: { color: '#ff9100', width: 1.2 } }
+  ], plotlyDarkLayout({
+    title: 'RSI (14)', height: 200, yaxis: { ...PLOTLY_LAYOUT.yaxis, range: [0, 100] },
+    shapes: [
+      { type: 'line', y0: 70, y1: 70, x0: 0, x1: 1, xref: 'paper', line: { color: '#ff1744', width: .7, dash: 'dash' } },
+      { type: 'line', y0: 30, y1: 30, x0: 0, x1: 1, xref: 'paper', line: { color: '#00e676', width: .7, dash: 'dash' } }
+    ]
+  }), PLOTLY_CONFIG);
+
+  // MACD
+  var histColors = d.hist.map(v => v >= 0 ? '#00e676' : '#ff1744');
+  Plotly.newPlot('macdChart', [
+    { x: d.dates, y: d.hist, type: 'bar', name: 'Histogram', marker: { color: histColors, opacity: .7 } },
+    { x: d.dates, y: d.macd, type: 'scatter', mode: 'lines', name: 'MACD', line: { color: '#40c4ff', width: .9 } },
+    { x: d.dates, y: d.signal, type: 'scatter', mode: 'lines', name: 'Signal', line: { color: '#ffd740', width: .9 } }
+  ], plotlyDarkLayout({
+    title: 'MACD', height: 200,
+    shapes: [{ type: 'line', y0: 0, y1: 0, x0: 0, x1: 1, xref: 'paper', line: { color: '#5a7fa8', width: .5 } }]
+  }), PLOTLY_CONFIG);
+</script>
+{% endif %}
+{% endblock %}

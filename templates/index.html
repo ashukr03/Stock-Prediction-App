@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stock Market Prediction — Market Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;600&display=swap"
+    rel="stylesheet">
+  <style>
+    /* ── RESET & VARS ── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0b0e14;
+      --bg2: #151921;
+      --bg3: #1c212d;
+      --border: #2a2e39;
+      --text: #d1d4dc;
+      --muted: #787b86;
+      --accent: #2962ff;
+      --green: #089981;
+      --red: #f23645;
+      --gold: #ff9800;
+      --purple: #9061f9;
+      --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-display);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── GRID LINES ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 60px 60px;
+      opacity: 0.25;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── TICKER TAPE ── */
+    .tape {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(5, 8, 15, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 0;
+      overflow: hidden;
+    }
+
+    .tape-inner {
+      display: inline-flex;
+      gap: 0;
+      animation: tape-scroll 35s linear infinite;
+      white-space: nowrap;
+    }
+
+    @keyframes tape-scroll {
+      from {
+        transform: translateX(0);
+      }
+
+      to {
+        transform: translateX(-50%);
+      }
+    }
+
+    .tape-item {
+      display: inline-block;
+      padding: 0 2.5rem;
+      font-family: var(--font-mono);
+      font-size: .8rem;
+      letter-spacing: .04em;
+    }
+
+    .tape-item .sym {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .tape-item .price {
+      color: var(--muted);
+      margin: 0 .35rem;
+    }
+
+    .tape-item .chg.up {
+      color: var(--green);
+    }
+
+    .tape-item .chg.down {
+      color: var(--red);
+    }
+
+    .tape-item .sep {
+      color: var(--border);
+      margin: 0 1.5rem;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 3rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -.02em;
+    }
+
+    .nav-logo span {
+      color: var(--text);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: var(--muted);
+      font-size: .85rem;
+      font-weight: 600;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      transition: color .2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--accent);
+    }
+
+    .nav-cta {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: .55rem 1.4rem;
+      border-radius: 6px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: .85rem;
+      cursor: pointer;
+      transition: opacity .2s, transform .15s;
+      text-decoration: none;
+    }
+
+    .nav-cta:hover {
+      opacity: .85;
+      transform: translateY(-1px);
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      z-index: 1;
+      padding: 6rem 3rem 4rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      background: rgba(0, 212, 255, .08);
+      border: 1px solid rgba(0, 212, 255, .25);
+      border-radius: 20px;
+      padding: .3rem .9rem;
+      font-size: .75rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-badge::before {
+      content: '●';
+      color: var(--green);
+      animation: blink 1.5s infinite;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .3
+      }
+    }
+
+    .hero h1 {
+      font-size: clamp(2.8rem, 6vw, 5.5rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -.03em;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero h1 .line2 {
+      color: var(--accent);
+    }
+
+    .hero p {
+      max-width: 560px;
+      color: var(--muted);
+      font-size: 1.1rem;
+      line-height: 1.7;
+      margin-bottom: 2.5rem;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      padding: .8rem 2rem;
+      border-radius: 6px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      transition: filter .2s;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.1);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: .8rem 2rem;
+      border-radius: 8px;
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color .2s, color .2s;
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── SEARCH BAR ── */
+    .search-wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto 3rem;
+      padding: 0 3rem;
+    }
+
+    .search-bar {
+      display: flex;
+      align-items: center;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: .8rem 1.2rem;
+      gap: .75rem;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .search-bar:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 212, 255, .1);
+    }
+
+    .search-bar input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: .05em;
+    }
+
+    .search-bar input::placeholder {
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .search-bar .go-btn {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: .5rem 1.2rem;
+      border-radius: 7px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      cursor: pointer;
+      font-size: .9rem;
+      transition: opacity .2s;
+    }
+
+    .search-bar .go-btn:hover {
+      opacity: .85;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .45rem;
+      margin-top: .85rem;
+    }
+
+    .chip {
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: .25rem .75rem;
+      font-size: .75rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s;
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+
+    .chip:hover {
+      background: rgba(0, 212, 255, .1);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── SECTION TITLE ── */
+    .section {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto 4rem;
+      padding: 0 3rem;
+    }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+    }
+
+    .section-label::before {
+      content: '';
+      display: block;
+      width: 24px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .section-title {
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 800;
+      letter-spacing: -.02em;
+      line-height: 1.15;
+      margin-bottom: 2rem;
+    }
+
+    /* ── FEATURE CARDS ── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+    }
+
+    @media (max-width: 900px) {
+      .features-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .feat-card {
+      background: var(--bg2);
+      padding: 2rem;
+      border: 1px solid var(--border);
+      transition: background .2s, border-color .2s;
+      cursor: default;
+    }
+
+    .feat-card:hover {
+      background: var(--bg3);
+      border-color: var(--accent);
+    }
+
+    .feat-icon {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .feat-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: .5rem;
+    }
+
+    .feat-desc {
+      font-size: .85rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ── STATS ROW ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      border: 1px solid var(--border);
+    }
+
+    @media (max-width: 700px) {
+      .stats-row {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .stat-box {
+      background: var(--bg2);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      border: 1px solid transparent;
+      transition: border-color .2s, background .2s;
+    }
+
+    .stat-box:hover {
+      border-color: var(--accent);
+      background: var(--bg3);
+    }
+
+    .stat-num {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -.03em;
+    }
+
+    .stat-lbl {
+      font-size: .8rem;
+      color: var(--muted);
+      margin-top: .3rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    /* ── MINI CHART (SVG) ── */
+    .chart-demo {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chart-demo::after {
+      content: 'LIVE PREVIEW';
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      color: var(--green);
+      background: rgba(0, 230, 118, .1);
+      border: 1px solid rgba(0, 230, 118, .3);
+      padding: .2rem .6rem;
+      border-radius: 4px;
+    }
+
+    /* ── MODULES LIST ── */
+    .modules {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+    }
+
+    @media (max-width: 700px) {
+      .modules {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .module-item {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+      padding: 1.2rem;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      transition: border-color .2s;
+    }
+
+    .module-item:hover {
+      border-color: var(--accent);
+    }
+
+    .module-num {
+      font-family: var(--font-mono);
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--accent);
+      min-width: 24px;
+      padding-top: .15rem;
+    }
+
+    .module-info .name {
+      font-size: .95rem;
+      font-weight: 700;
+      margin-bottom: .25rem;
+    }
+
+    .module-info .desc {
+      font-size: .8rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* ── INSTALL STEPS ── */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: .8rem;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 2.5rem 1fr;
+      gap: 1rem;
+      align-items: start;
+      padding: 1.2rem;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .step-num {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      background: rgba(0, 212, 255, .12);
+      border: 1px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .8rem;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: var(--font-mono);
+    }
+
+    .step-body .cmd {
+      font-family: var(--font-mono);
+      font-size: .82rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: .45rem .85rem;
+      border-radius: 6px;
+      margin-top: .4rem;
+      color: var(--green);
+      display: block;
+    }
+
+    .step-body .title {
+      font-weight: 700;
+      font-size: .95rem;
+      margin-bottom: .2rem;
+    }
+
+    .step-body .note {
+      font-size: .8rem;
+      color: var(--muted);
+      margin-top: .3rem;
+    }
+
+    /* ── CODE BLOCK ── */
+    .code-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+      font-family: var(--font-mono);
+      font-size: .82rem;
+      line-height: 1.7;
+      overflow-x: auto;
+      color: var(--text);
+    }
+
+    .code-block .c {
+      color: var(--muted);
+    }
+
+    .code-block .k {
+      color: var(--purple);
+    }
+
+    .code-block .s {
+      color: var(--green);
+    }
+
+    .code-block .v {
+      color: var(--gold);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 2rem 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .footer-logo {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .footer-note {
+      font-size: .75rem;
+      color: var(--muted);
+    }
+
+    /* Removed glow blobs for realism */
+    .blob {
+      display: none;
+    }
+
+    /* ── ANIMATIONS ── */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeUp .6s ease forwards;
+    }
+
+    @keyframes fadeUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .delay-1 {
+      animation-delay: .1s;
+    }
+
+    .delay-2 {
+      animation-delay: .2s;
+    }
+
+    .delay-3 {
+      animation-delay: .35s;
+    }
+
+    .delay-4 {
+      animation-delay: .5s;
+    }
+
+    /* ── SPARKLINE ANIMATION ── */
+    .sparkline {
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 1000;
+      animation: draw 2.5s ease forwards .5s;
+    }
+
+    @keyframes draw {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- BLOBS -->
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <!-- TICKER TAPE -->
+  <div class="tape">
+    <div class="tape-inner" id="tape">
+      <!-- filled by JS -->
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">Stock<span>Market</span>Prediction</div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#modules">Modules</a>
+    </div>
+    {% if session.get('user') %}
+    <a class="nav-cta" href="{{ url_for('dashboard') }}">Go to Dashboard →</a>
+    {% else %}
+    <a class="nav-cta" href="{{ url_for('signup') }}">Launch App →</a>
+    {% endif %}
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-badge fade-in">Real-time Market Intelligence</div>
+    <h1 class="fade-in delay-1">
+      Predict Markets<br>
+      <span class="line2">With AI Precision</span>
+    </h1>
+    <p class="fade-in delay-2">
+      LSTM deep learning + live sentiment fusion for stock price prediction.
+      Sector analysis, balance sheets, technical indicators — all in one dashboard.
+    </p>
+    <div class="hero-actions fade-in delay-3">
+      {% if session.get('user') %}
+      <a href="{{ url_for('dashboard') }}" class="btn-primary">Go to Dashboard</a>
+      {% else %}
+      <a href="{{ url_for('signup') }}" class="btn-primary">Get Started</a>
+      {% endif %}
+      <a href="#features" class="btn-ghost">See Features</a>
+    </div>
+  </section>
+
+  <!-- SEARCH -->
+  <div class="search-wrap fade-in delay-4">
+    <div class="search-bar">
+      <span style="color:var(--muted);font-family:var(--font-mono);font-size:.9rem">$</span>
+      <input type="text" id="tickerInput" placeholder="Enter ticker: AAPL, TSLA, RELIANCE.NS …" spellcheck="false" />
+      <button class="go-btn" onclick="launchApp()">Analyze →</button>
+    </div>
+    <div class="chips" id="chipRow"></div>
+  </div>
+
+  <!-- STATS -->
+  <div class="section">
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-num">8+</div>
+        <div class="stat-lbl">Feature Modules</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">100%</div>
+        <div class="stat-lbl">Free Stack</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">LSTM</div>
+        <div class="stat-lbl">Deep Learning</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">Live</div>
+        <div class="stat-lbl">News Sentiment</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIVE CHART PREVIEW -->
+  <div class="section">
+    <div class="chart-demo">
+      <div style="font-family:var(--font-mono);font-size:.75rem;color:var(--muted);margin-bottom:1rem;">
+        GOOGL — AI PREDICTION OVERLAY
+      </div>
+      <svg viewBox="0 0 900 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:160px;">
+        <defs>
+          <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.2" />
+            <stop offset="100%" stop-color="#00d4ff" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+        <!-- Grid -->
+        <line x1="0" y1="50" x2="900" y2="50" stroke="#1a2d4a" stroke-width=".5" />
+        <line x1="0" y1="100" x2="900" y2="100" stroke="#1a2d4a" stroke-width=".5" />
+        <line x1="0" y1="150" x2="900" y2="150" stroke="#1a2d4a" stroke-width=".5" />
+        <!-- Area fill -->
+        <path class="sparkline" fill="url(#fillGrad)"
+          d="M0,140 C50,130 100,100 150,85 S250,60 300,70 S400,55 450,45 S560,55 610,40 S700,30 750,35 S850,30 900,25 L900,200 L0,200 Z"
+          stroke="none" />
+        <!-- Actual line -->
+        <path class="sparkline" fill="none" stroke="#00d4ff" stroke-width="2"
+          d="M0,140 C50,130 100,100 150,85 S250,60 300,70 S400,55 450,45 S560,55 610,40 S700,30 750,35 S850,30 900,25" />
+        <!-- Prediction line (dashed) -->
+        <path class="sparkline" fill="none" stroke="#ffc107" stroke-width="1.5" stroke-dasharray="5,4"
+          d="M600,42 Q700,28 750,32 S850,26 900,20" />
+        <!-- Dots -->
+        <circle cx="900" cy="20" r="4" fill="#ffc107" />
+        <circle cx="600" cy="42" r="4" fill="#00d4ff" />
+        <!-- Labels -->
+        <text x="610" y="35" fill="#00d4ff" font-size="9" font-family="JetBrains Mono">Actual</text>
+        <text x="760" y="18" fill="#ffc107" font-size="9" font-family="JetBrains Mono">Predicted</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <div class="section" id="features">
+    <div class="section-label">What's inside</div>
+    <div class="section-title">Every Tool a Trader Needs</div>
+    <div class="features-grid">
+      <div class="feat-card">
+        <div class="feat-icon">🤖</div>
+        <div class="feat-title">LSTM Price Prediction</div>
+        <div class="feat-desc">100-unit stacked LSTM with dropout. Trained on 15+ years of data. Actual vs predicted
+          overlay chart included.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">📰</div>
+        <div class="feat-title">Live News Sentiment</div>
+        <div class="feat-desc">Real-time article fetch from NewsAPI with TextBlob polarity scoring. Bullish / Bearish /
+          Neutral verdict per ticker.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🌐</div>
+        <div class="feat-title">Sector-Wise Growth</div>
+        <div class="feat-desc">YTD performance bar charts for Tech, EV, Finance, Healthcare, Energy, and Indian Stocks —
+          all in one view.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">📊</div>
+        <div class="feat-title">Financial Statements</div>
+        <div class="feat-desc">Income statement, balance sheet, and cash flow data pulled live from Yahoo Finance.
+          Formatted in B/M for readability.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">📉</div>
+        <div class="feat-title">Technical Indicators</div>
+        <div class="feat-desc">Price + Bollinger Bands, MA20/50/100/200, RSI(14), MACD histogram — all in one stacked
+          chart with period selector.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">⚡</div>
+        <div class="feat-title">Risk & Volatility</div>
+        <div class="feat-desc">Annual volatility, expected return, Sharpe ratio estimate, max drawdown, returns
+          distribution histogram, rolling volatility chart.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🎯</div>
+        <div class="feat-title">Trade Signal</div>
+        <div class="feat-desc">BUY / SELL / HOLD signal combining LSTM forecast + news sentiment adjustment. Final
+          adjusted price with delta shown.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">📡</div>
+        <div class="feat-title">Live Ticker Tape</div>
+        <div class="feat-desc">Real-time scrolling price bar for top global & Indian stocks, updated every 5 minutes via
+          yfinance cache.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🔍</div>
+        <div class="feat-title">Ticker Suggestions</div>
+        <div class="feat-desc">Trending chip suggestions for global & Indian tickers to quickly switch between stocks
+          without typing.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULES -->
+  <div class="section" id="modules">
+    <div class="section-label">Architecture</div>
+    <div class="section-title">How It Works</div>
+    <div class="modules">
+      <div class="module-item">
+        <div class="module-num">01</div>
+        <div class="module-info">
+          <div class="name">LSTM.py — Model Training</div>
+          <div class="desc">Downloads 15yr history, preprocesses with MinMaxScaler, trains stacked LSTM (100 units × 2
+            layers, Dropout 0.2), saves keras_model.keras.</div>
+        </div>
+      </div>
+      <div class="module-item">
+        <div class="module-num">02</div>
+        <div class="module-info">
+          <div class="name">flask_app.py — Dashboard</div>
+          <div class="desc">Loads trained model, fetches live data from yfinance & NewsAPI, renders all charts,
+            financials, sentiment, and trade signal.</div>
+        </div>
+      </div>
+      <div class="module-item">
+        <div class="module-num">03</div>
+        <div class="module-info">
+          <div class="name">yfinance — Market Data</div>
+          <div class="desc">Free Yahoo Finance API. Provides price history, company info, income statements, balance
+            sheets, cash flow — no key needed.</div>
+        </div>
+      </div>
+      <div class="module-item">
+        <div class="module-num">04</div>
+        <div class="module-info">
+          <div class="name">NewsAPI — Sentiment Engine</div>
+          <div class="desc">Free tier gives 100 requests/day. Fetches latest English articles per ticker. TextBlob
+            scores polarity −1 to +1.</div>
+        </div>
+      </div>
+      <div class="module-item">
+        <div class="module-num">05</div>
+        <div class="module-info">
+          <div class="name">Technical Indicators — Built-in</div>
+          <div class="desc">RSI, MACD, Bollinger Bands, Moving Averages all computed from pandas/numpy — no paid data
+            feed required.</div>
+        </div>
+      </div>
+      <div class="module-item">
+        <div class="module-num">06</div>
+        <div class="module-info">
+          <div class="name">Sector Engine — Auto-grouped</div>
+          <div class="desc">6 sectors hardcoded with representative tickers. YTD performance fetched live with a single
+            yf.download() call and cached 30 min.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">StockMarketPrediction</div>
+    <div class="footer-note">Built with Flask · yfinance · Keras · NewsAPI · For educational use only. Not financial
+      advice.</div>
+  </footer>
+
+  <script>
+    // ── TICKER DATA ──
+    const TICKERS = [
+      { sym: 'NVDA', price: '$875.40', chg: '+2.15%', up: true },
+      { sym: 'AAPL', price: '$189.50', chg: '-0.30%', up: false },
+      { sym: 'GOOGL', price: '$172.80', chg: '+1.20%', up: true },
+      { sym: 'TSLA', price: '$195.70', chg: '+3.45%', up: true },
+      { sym: 'MSFT', price: '$410.20', chg: '+0.85%', up: true },
+      { sym: 'AMZN', price: '$183.00', chg: '+0.60%', up: true },
+      { sym: 'META', price: '$503.10', chg: '-0.45%', up: false },
+      { sym: 'BTC', price: '$62,400', chg: '+4.10%', up: true },
+      { sym: 'INFY', price: '$18.90', chg: '-1.20%', up: false },
+      { sym: 'TCS', price: '$22.50', chg: '+0.80%', up: true },
+    ];
+
+    function buildTape() {
+      const tape = document.getElementById('tape');
+      let html = '';
+      // Duplicate for seamless loop
+      for (let r = 0; r < 2; r++) {
+        TICKERS.forEach(t => {
+          const cls = t.up ? 'up' : 'down';
+          const arrow = t.up ? '▲' : '▼';
+          html += `<span class="tape-item">
+        <span class="sym">${t.sym}</span>
+        <span class="price">${t.price}</span>
+        <span class="chg ${cls}">${arrow} ${t.chg}</span>
+        <span class="sep">|</span>
+      </span>`;
+        });
+      }
+      tape.innerHTML = html;
+    }
+
+    // ── CHIPS ──
+    const TRENDING = [
+      'NVDA', 'AAPL', 'GOOGL', 'TSLA', 'MSFT', 'AMZN', 'META', 'NFLX',
+      'AMD', 'BTC-USD', 'RELIANCE.NS', 'TCS.NS', 'INFY.NS', 'HDFCBANK.NS'
+    ];
+
+    function buildChips() {
+      const row = document.getElementById('chipRow');
+      row.innerHTML = TRENDING.map(t =>
+        `<span class="chip" onclick="setTicker('${t}')">${t}</span>`
+      ).join('');
+    }
+
+    function setTicker(val) {
+      document.getElementById('tickerInput').value = val;
+      document.getElementById('tickerInput').focus();
+    }
+
+    function launchApp() {
+      const t = document.getElementById('tickerInput').value.trim().toUpperCase() || 'GOOGL';
+      window.location.href = `/dashboard?ticker=${t}`;
+    }
+
+    // ── ENTER KEY ──
+    document.addEventListener('DOMContentLoaded', () => {
+      buildTape();
+      buildChips();
+      document.getElementById('tickerInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter') launchApp();
+      });
+    });
+
+    // ── SCROLL REVEAL ──
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.style.opacity = '1';
+          e.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.feat-card, .module-item, .step, .stat-box').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(16px)';
+      el.style.transition = 'opacity .5s ease, transform .5s ease';
+      observer.observe(el);
+    });
+  </script>
+</body>
+
+</html>
