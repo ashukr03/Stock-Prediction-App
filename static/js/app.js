@@ -66,20 +66,20 @@ function showAlert(msg, type) {
   setTimeout(() => { if (container.firstChild) container.firstChild.remove(); }, 5000);
 }
 
-// ── PLOTLY DARK THEME ──
+// ── PLOTLY LIGHT THEME ──
 const PLOTLY_LAYOUT = {
-  paper_bgcolor: '#0d1526', plot_bgcolor: '#0d1526',
-  font: { family: 'Syne, sans-serif', color: '#b0c4de', size: 11 },
-  xaxis: { gridcolor: '#1e2d50', linecolor: '#1e2d50', zerolinecolor: '#1e2d50' },
-  yaxis: { gridcolor: '#1e2d50', linecolor: '#1e2d50', zerolinecolor: '#1e2d50' },
+  paper_bgcolor: '#ffffff', plot_bgcolor: '#ffffff',
+  font: { family: 'Inter, sans-serif', color: '#1e293b', size: 11 },
+  xaxis: { gridcolor: '#f1f5f9', linecolor: '#e2e8f0', zerolinecolor: '#e2e8f0' },
+  yaxis: { gridcolor: '#f1f5f9', linecolor: '#e2e8f0', zerolinecolor: '#e2e8f0' },
   margin: { l: 50, r: 20, t: 40, b: 40 },
-  legend: { bgcolor: 'rgba(13,21,38,0.8)', bordercolor: '#1e2d50', font: { color: '#b0c4de', size: 10 } },
+  legend: { bgcolor: 'rgba(255,255,255,0.8)', bordercolor: '#e2e8f0', font: { color: '#1e293b', size: 10 } },
 };
 
 const PLOTLY_CONFIG = { responsive: true, displayModeBar: true, displaylogo: false,
   modeBarButtonsToRemove: ['lasso2d', 'select2d'] };
 
-function plotlyDarkLayout(overrides) {
+function plotlyLayout(overrides) {
   return { ...PLOTLY_LAYOUT, ...overrides,
     xaxis: { ...PLOTLY_LAYOUT.xaxis, ...(overrides?.xaxis || {}) },
     yaxis: { ...PLOTLY_LAYOUT.yaxis, ...(overrides?.yaxis || {}) }

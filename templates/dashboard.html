@@ -120,12 +120,12 @@
   Plotly.newPlot('predictionChart', [
     { x: pd.dates, y: pd.actual, type: 'scatter', mode: 'lines', name: 'Actual Price', line: { color: '#40c4ff', width: 1.5 } },
     { x: pd.dates, y: pd.predicted, type: 'scatter', mode: 'lines', name: 'Model Prediction', line: { color: '#ff9100', width: 1.5, dash: 'dash' } }
-  ], plotlyDarkLayout({ title: 'LSTM Model — Actual vs Predicted Price' }), PLOTLY_CONFIG);
+  ], plotlyLayout({ title: 'LSTM Model — Actual vs Predicted Price' }), PLOTLY_CONFIG);
 
   // Returns distribution
   Plotly.newPlot('returnsChart', [
     { x: pd.returns, type: 'histogram', nbinsx: 80, marker: { color: '#40c4ff', opacity: .7 }, name: 'Daily Returns' }
-  ], plotlyDarkLayout({
+  ], plotlyLayout({
     title: 'Daily Returns Distribution', xaxis: { ...PLOTLY_LAYOUT.xaxis, title: 'Return %' }, showlegend: false,
     shapes: [{ type: 'line', x0: 0, x1: 0, y0: 0, y1: 1, yref: 'paper', line: { color: '#ff9100', width: 1.2, dash: 'dash' } }]
   }), PLOTLY_CONFIG);
@@ -133,7 +133,7 @@
   // Rolling volatility
   Plotly.newPlot('volChart', [
     { x: pd.vol_dates, y: pd.rolling_vol, type: 'scatter', mode: 'lines', fill: 'tozeroy', name: '30-Day Vol', line: { color: '#ff9100', width: 1 }, fillcolor: 'rgba(255,145,0,.1)' }
-  ], plotlyDarkLayout({ title: '30-Day Rolling Volatility', yaxis: { ...PLOTLY_LAYOUT.yaxis, title: 'Volatility %' }, showlegend: false }), PLOTLY_CONFIG);
+  ], plotlyLayout({ title: '30-Day Rolling Volatility', yaxis: { ...PLOTLY_LAYOUT.yaxis, title: 'Volatility %' }, showlegend: false }), PLOTLY_CONFIG);
 </script>
 {% endif %}
 {% endblock %}

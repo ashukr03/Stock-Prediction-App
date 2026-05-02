@@ -10,22 +10,22 @@
 }
 
 :root {
-    --bg: #0b0e14;
-    --bg2: #151921;
-    --bg3: #1c212d;
-    --border: #2a2e39;
-    --text: #d1d4dc;
-    --muted: #787b86;
-    --sub: #9ea3ae;
-    --accent: #2962ff;
-    --green: #089981;
-    --red: #f23645;
-    --gold: #ff9800;
-    --purple: #9061f9;
-    --orange: #f57c00;
+    --bg: #ffffff;
+    --bg2: #f8fafc;
+    --bg3: #f1f5f9;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --muted: #475569;
+    --sub: #334155;
+    --accent: #2563eb;
+    --green: #10b981;
+    --red: #ef4444;
+    --gold: #f59e0b;
+    --purple: #8b5cf6;
+    --orange: #f97316;
     --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --mono: 'JetBrains Mono', monospace;
-    --radius: 8px
+    --radius: 12px
 }
 
 html {
@@ -69,7 +69,7 @@ body::before {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(5, 8, 15, .92);
+    background: rgba(255, 255, 255, .92);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border);
     padding: 8px 0;
@@ -126,7 +126,7 @@ body::before {
     align-items: center;
     justify-content: space-between;
     padding: 1rem 3rem;
-    background: rgba(5, 8, 15, .8);
+    background: rgba(255, 255, 255, .8);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border)
 }
@@ -134,12 +134,12 @@ body::before {
 .nav-logo {
     font-size: 1.35rem;
     font-weight: 800;
-    color: var(--accent);
+    color: var(--text);
     letter-spacing: -.02em
 }
 
 .nav-logo span {
-    color: var(--text)
+    color: var(--accent)
 }
 
 .nav-links {
@@ -162,7 +162,7 @@ body::before {
 .nav-links a:hover,
 .nav-links a.active {
     color: var(--accent);
-    background: rgba(0, 212, 255, .06);
+    background: rgba(37, 99, 235, .06);
     opacity: 1
 }
 
@@ -307,13 +307,13 @@ body::before {
 }
 
 .auth-card {
-    background: var(--bg3);
+    background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 2.5rem 2rem;
     width: 100%;
     max-width: 460px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, .3)
+    box-shadow: 0 10px 40px rgba(0, 0, 0, .04)
 }
 
 .auth-card h2 {
@@ -370,7 +370,7 @@ body::before {
 
 .form-input:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(0, 212, 255, .1)
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .1)
 }
 
 /* Buttons */
@@ -468,15 +468,15 @@ body::before {
 }
 
 .alert-info {
-    background: rgba(0, 212, 255, .06);
-    border: 1px solid rgba(0, 212, 255, .2);
+    background: rgba(37, 99, 235, .06);
+    border: 1px solid rgba(37, 99, 235, .2);
     color: var(--sub)
 }
 
 /* OTP note */
 .otp-note {
-    background: rgba(0, 212, 255, .06);
-    border: 1px solid rgba(0, 212, 255, .2);
+    background: rgba(37, 99, 235, .06);
+    border: 1px solid rgba(37, 99, 235, .2);
     border-radius: 8px;
     padding: .7rem 1rem;
     font-size: .8rem;
@@ -555,12 +555,12 @@ body::before {
 
 .data-table td {
     padding: .6rem 1rem;
-    border-bottom: 1px solid rgba(26, 45, 74, .4);
+    border-bottom: 1px solid var(--border);
     color: var(--text)
 }
 
 .data-table tr:hover td {
-    background: rgba(0, 212, 255, .03)
+    background: rgba(37, 99, 235, .03)
 }
 
 .table-wrap {
@@ -593,14 +593,14 @@ body::before {
 }
 
 .chip:hover {
-    background: rgba(0, 212, 255, .1);
+    background: rgba(37, 99, 235, .1);
     border-color: var(--accent);
     color: var(--accent)
 }
 
 /* News */
 .news-item {
-    border-bottom: 1px solid rgba(26, 45, 74, .4);
+    border-bottom: 1px solid var(--border);
     padding: .8rem 0;
     font-size: .85rem
 }
@@ -714,7 +714,7 @@ body::before {
 
 .search-bar:focus-within {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(0, 212, 255, .1)
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .1)
 }
 
 .search-bar .prefix {
@@ -779,7 +779,7 @@ body::before {
 
 .fin-tab.active,
 .fin-tab:hover {
-    background: rgba(0, 212, 255, .08);
+    background: rgba(37, 99, 235, .08);
     border-color: var(--accent);
     color: var(--accent)
 }
@@ -827,7 +827,7 @@ body::before {
 
 .period-btn.active,
 .period-btn:hover {
-    background: rgba(0, 212, 255, .1);
+    background: rgba(37, 99, 235, .1);
     border-color: var(--accent);
     color: var(--accent)
 }

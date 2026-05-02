@@ -31,7 +31,7 @@
       y: tickers, x: values, type: 'bar', orientation: 'h',
       marker: { color: colors }, text: values.map(v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%'),
       textposition: 'outside', textfont: { color: '#e0e6f0', size: 10 }
-    }], plotlyDarkLayout({
+    }], plotlyLayout({
       title: name, height: 220, margin: { l: 80, r: 40, t: 40, b: 30 },
       xaxis: { ...PLOTLY_LAYOUT.xaxis, title: 'YTD %' },
       shapes: [{ type: 'line', x0: 0, x1: 0, y0: -.5, y1: tickers.length - .5, line: { color: '#5a7fa8', width: .8 } }]
