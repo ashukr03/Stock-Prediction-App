@@ -74,9 +74,11 @@ const PLOTLY_LAYOUT = {
   yaxis: { gridcolor: '#f1f5f9', linecolor: '#e2e8f0', zerolinecolor: '#e2e8f0' },
   margin: { l: 50, r: 20, t: 40, b: 40 },
   legend: { bgcolor: 'rgba(255,255,255,0.8)', bordercolor: '#e2e8f0', font: { color: '#1e293b', size: 10 } },
+  dragmode: 'zoom',
 };
 
 const PLOTLY_CONFIG = { responsive: true, displayModeBar: true, displaylogo: false,
+  scrollZoom: true, doubleClick: 'reset+autosize',
   modeBarButtonsToRemove: ['lasso2d', 'select2d'] };
 
 function plotlyLayout(overrides) {

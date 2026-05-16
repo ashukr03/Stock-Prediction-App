@@ -10,4 +10,5 @@ requests>=2.31
 pandas>=2.2
 numpy>=1.26
 gunicorn>=21.2
-python-dotenv>=1.0
+python-dotenv>=1.0
+google-generativeai>=0.5.4

@@ -99,10 +99,11 @@ def init_db():
     admin_pw_hash = hash_password("admin123")
     c.execute("SELECT COUNT(*) FROM users WHERE role='admin'")
     if c.fetchone()[0] == 0:
+        admin_email = SMTP_SENDER or "admin@aistockpro.com"
         c.execute("""
             INSERT OR IGNORE INTO users (name, email, password_hash, verified, role)
             VALUES (?, ?, ?, 1, 'admin')
-        """, ("Admin", SMTP_SENDER, admin_pw_hash))
+        """, ("Admin", admin_email, admin_pw_hash))
 
     conn.commit()
     conn.close()
@@ -159,7 +160,7 @@ def send_email(to_email: str, subject: str, html_body: str) -> bool:
             server.sendmail(SMTP_SENDER, to_email, msg.as_string())
         return True
     except Exception as e:
-        st.error(f"Email error: {e}")
+        print(f"Email error: {e}")
         return False
 
 

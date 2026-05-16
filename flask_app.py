@@ -21,6 +21,13 @@ from auth import (init_db, hash_password, check_password, generate_otp, store_ot
 warnings.filterwarnings('ignore')
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY', 'ai-stock-pro-flask-secret-key-2024')
+
+# Initialize database at startup
+try:
+    init_db()
+except Exception as e:
+    print(f"Database initialization error: {e}")
+
 # ── CONFIG ──
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")  
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -168,6 +175,7 @@ def fmt_fin(x):
 # ── AUTH ROUTES ──
 @app.route('/login', methods=['GET','POST'])
 def login():
+    init_db()  # Ensure tables exist
     if request.method == 'POST':
         email, pw = request.form.get('email',''), request.form.get('password','')
         if not email or '@' not in email:
@@ -191,6 +199,7 @@ def login():
 
 @app.route('/signup', methods=['GET','POST'])
 def signup():
+    init_db()  # Ensure tables exist
     otp_sent = 'su_pending' in session
     if request.method == 'POST':
         step = request.form.get('step')
@@ -241,6 +250,7 @@ def signup():
 
 @app.route('/forgot-password', methods=['GET','POST'])
 def forgot_password():
+    init_db()  # Ensure tables exist
     otp_sent = 'fp_pending' in session
     if request.method == 'POST':
         step = request.form.get('step')
@@ -597,29 +607,75 @@ def learn():
             
     return render_template('learn.html', glossary=filtered_glossary, search=search)
 
+def get_best_available_model():
+    """Automatically detect the best available Gemini model for the current API key."""
+    try:
+        # Standard preference order for free-tier models in 2026
+        prefs = ['gemini-3-flash', 'gemini-2.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash']
+        
+        # Try to list models from the API to see what's actually available
+        available_models = []
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                available_models.append(m.name.replace('models/', ''))
+        
+        print(f"DEBUG: Available Gemini models: {available_models}")
+        
+        # Match our preferences against available models
+        for p in prefs:
+            if p in available_models:
+                return p
+        
+        # If no preferred model found, use the first available one that supports content generation
+        if available_models:
+            # Prefer 'flash' models if any
+            flash_options = [m for m in available_models if 'flash' in m.lower()]
+            return flash_options[0] if flash_options else available_models[0]
+            
+    except Exception as e:
+        print(f"Error listing models: {e}")
+    
+    # Absolute fallback
+    return 'gemini-1.5-flash'
+
 @app.route('/api/ai_search')
-@login_required
 def api_ai_search():
     query = request.args.get('q', '').strip()
     if not query:
         return jsonify({'error': 'Empty query'}), 400
         
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        model_name = get_best_available_model()
+        model = genai.GenerativeModel(model_name)
+        
         prompt = f"""Explain "{query}" concisely for a beginner in 2-3 paragraphs.
         Include ONE real-world example.
         If helpful, include a Mermaid.js diagram. 
         CRITICAL: All node labels MUST be in double quotes. 
         Example: A["Buy Stock"] --> B["Price Goes Up"]
         Format in Markdown. Put Mermaid code inside ```mermaid blocks."""
-        response = model.generate_content(prompt)
+        
+        # Attempt generation with retries/fallbacks
+        try:
+            response = model.generate_content(prompt)
+        except Exception as e:
+            # If the first choice fails (e.g. 404), try the next one in the list
+            if '404' in str(e) or 'not found' in str(e).lower():
+                # Simple fallback to a likely available model
+                model = genai.GenerativeModel('gemini-2.5-flash')
+                response = model.generate_content(prompt)
+            else:
+                raise e
         
         if not response or not response.text:
             return jsonify({'error': 'AI returned an empty response. Check API key permissions.'}), 500
             
         return jsonify({'result': response.text})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        error_msg = str(e)
+        if "404" in error_msg:
+            error_msg = f"Model Not Found (404). Please ensure 'gemini-3-flash' or 'gemini-2.5-flash' is enabled in your Google AI Studio. Original Error: {error_msg}"
+        return jsonify({'error': error_msg}), 500
 
 # ── API: TICKER TAPE ──
 @app.route('/api/ticker-tape')
